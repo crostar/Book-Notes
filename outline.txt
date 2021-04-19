@@ -1,0 +1,25 @@
+industrial 3d camera data transmission
+
+- background
+    - how 3d camera work
+    - current data transmission (server and client, TCP connection)
+- problem
+    - lack of extendibility
+    - high workload of maintainence
+- analysis
+    - Genicam intro
+    - Genicam advantage
+        - compatibility
+        - usibility
+        - easy to maintain
+        - stable
+        - extendible
+    - Genicam disadvantage
+        - low degree of customization
+        - restricted functions
+        - long development cycle
+    - Use together
+        - resolve race condition
+    - Use Ebus Tx
+- conclusion
+    -
