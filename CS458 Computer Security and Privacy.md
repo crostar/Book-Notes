@@ -505,10 +505,143 @@ In a **lattice**, for every $a$ and $b$, there is a **unique lowest upper bound*
 - Some processors support layering based on rings
 - x86 architecture supports four rings, but Linux and Windows use only two of them
 
-
-
 **Virtualization**:
 
 - virtual memory
 - virtual machines
 
+
+
+## Module4. Network Security
+
+> Some basic network stuff are omitted here, see CS456 notes
+
+### Threats in networks
+
+#### Interception
+
+- **Packet sniffing:** intercepting and logging all traffic on a wired or wireless link
+- `tcpdump`: CLI tool to capture packets on a machine
+- `wireshark`: GUI tool to capture packtes
+- **Network probe:** in order to learn its topology, services provided and any vulnerabilities
+- **Port scanning:** by sending TCP connection requests to a server, we could know which port is open, closed or blocked/filtered (Firewalls)
+  - `nmap`: net work mapping tool to probe networks through various protocols including ICMP, TCP
+
+#### Modification and Fabrication
+
+- IP Addresses is lack of integrity
+
+  - The src or dest IP could be modified by malicious parties
+
+  - Ingress and egress filters could prevent IP spoofing 
+
+#### Inerruption
+
+- **Denial-of-service (DoS)** attack venues
+  - Exploiting vulnerabilities to result in remote code execution and crashes
+  - Resource exhaustion such as Bandwidth and memory
+
+- **ICMP flood:** continuously send ICMP packets
+  - Basic ICMP flood mitigation
+    - IP address-based blocking: No more that $x$ ICMP packets from IP address Y
+    - Rate limiting: no more that $x$ ICMP echo packets per minute
+
+- **Smurf floods:** send ICMP request package from the faked server address to the broadcast function of router, thus every machine respond to the server.
+
+- **SYN flooding:** exhaust server memory allocated for the TCP connections
+
+
+
+### TCP Hijacking Attack
+
+![1623841622538](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1623841622538.png)
+
+- **man-in-the-middle attack:** attacker makes server and client talk to the attacker himself, but not to each other
+
+
+
+### Network security controls: FireWalls
+
+- Allowlist v.s. denylist: We prefer allowlist
+
+  ![1623842515806](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1623842515806.png)
+
+- Screening router: Packet-filtering rules
+
+  - Examine headers of IP/TCP
+    - Ingress: Src IP should be outside network
+    - Egress: Src IP should be inside network
+
+- Firewall decisions
+
+  - **Allow** the packet to pass
+  - Type-1 deny: **Drop** the packet
+  - Type-2 deny: **Reject** the packet but also inform the source
+
+- Defense-in-depth and application proxy architechture
+
+  ![1623842996068](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1623842996068.png)
+
+- Limitations
+
+  - Topological limitations: A network perimeter may not be realistic - un monitored WiFi access points, BYO devices - not all accesses are mediated
+  - Trusting insiders: Social engineering, malicious intent
+
+### Intrusion Detection system (IDSes)
+
+IDSes can be used to detect unusual activities that may be initiated by an insider
+
+- Zeek architecture example
+  - network -> event engine -> policy script interpreter
+
+- Classification
+  - Architecture: collecting raw data
+    - host-based IDS (Snort, tripwire)
+    - network-based IDS (Zeek)
+  - Method: decide if intrusion happens
+    - Signature-based: Denylist
+    - Specification-based: Manual whitelist
+    - Anomaly-based: Empirical whitelist
+
+- Host-based IDS (HIDS)
+
+  ![1623843800624](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1623843800624.png)
+
+- Network-based IDS (NIDS)
+
+  ![1623843824131](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1623843824131.png)
+
+- ![1623844052062](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1623844052062.png)
+
+- **Signature-based IDS**
+
+  - Denylist approach
+  - Low false positives (not many false alerts for normal behavior)
+  - Fast
+  - High false negatives (miss out on new attacks)
+
+- **Specification-based IDS**
+
+  - Allowlist approach
+  - Low false negatives (can detect new attacks)
+  - Low false positives (not many false alerts for normal behavior)
+  - Manually specifying allowlist rules for each application
+  - Tripwire example:
+    - Generate a policy file: what to monitor, how to monitor it
+    - Create a baseline DB: default state of the system
+    - Running a check periodically: detect intrusions
+    - Updating the baseline DB: user can be habituated to remove monitering for some annoying files.
+
+- **Anomaly-based IDS**
+
+  - Empirical allowlist approach: Infer allowed events via **machine learning**
+  - Training period
+    - observe a user or network to generate raw data
+    - create profiles based on important features of this raw data
+  - Testing period: if the user or network deviates significantly from the profile, raise alerts
+  - No need to manually create an allowlist
+  - Can have some false positives
+
+### Honeypot
+
+- Bait attackers to attack controlled virtual machines, to ultimately deflect them from attacking important hosts
