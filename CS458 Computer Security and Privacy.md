@@ -592,8 +592,9 @@ In a **lattice**, for every $a$ and $b$, there is a **unique lowest upper bound*
 IDSes can be used to detect unusual activities that may be initiated by an insider
 
 - Zeek architecture example
-  - network -> event engine -> policy script interpreter
-
+  
+- network -> event engine -> policy script interpreter
+  
 - Classification
   - Architecture: collecting raw data
     - host-based IDS (Snort, tripwire)
@@ -645,3 +646,199 @@ IDSes can be used to detect unusual activities that may be initiated by an insid
 ### Honeypot
 
 - Bait attackers to attack controlled virtual machines, to ultimately deflect them from attacking important hosts
+
+
+
+## Module 5. Internet Application Security and Privacy
+
+### Cryptography
+
+- Cryptography: secret writing, making secret messages
+  - turning **plaintext** into **ciphertext**
+- Cryptanalysis: Breaking secret messages
+- Cryptology is the science that studies both
+
+**Three major types of compnents**
+
+- **Confidentiality** components: preventing Eve from **reading** Alice's messages
+- **Integrity** components: preventing Mallory from **modifying** Alice's messages without being detected
+- **Authenticity** components: preventing Mallory from **impersonating** (pretending to be) Alice
+
+**Kerckhoffs' Principle**
+
+- The security of a cryptosystem should not rely on a secret that is hard to change
+
+- Strong cryptosystems
+  - We assume the attacker (Eve) has when she is trying to break our system
+    - Know the algorithm
+    - Know some part of the plaintext
+    - Know a number of corresponding plaintext/ciphertext pairs
+    - Have access to an encryption and/or decryption oracle
+  - But still want to prevent Eve!
+
+### Secret-key encryption
+
+- Secret-key encryption is the simplest form of cryptography
+- Also called symmetric encryption
+- The key Alice uses is the same as the key that Bob uses
+- Eve, not knowing the key, should not know the content
+- One-time pad: completely unbreakable cryptosystem
+  - generate a key $K$ completely randomly
+  - the encryption and decryption function is just $XOR$
+  - Used in the Washington / Moscow hotline for many years
+
+- In contrast to OTP's perfect security, most cryptosystems have "computational" security
+  - This means that it is certain they can be broken, given enough work by Eve
+
+**Stream Ciphers**
+
+- A stream cipher is what you get if you take the OTP, but use a pseudorandom keystream instead of a truly random one
+- RC4, ChaCha
+
+**Block ciphers**
+
+- operate on blocks of plaintext (64/128 bits)
+
+- AES
+
+**Modes of operation**
+
+- Cipher Block Chaining (CBC), Counter (CTR), and Galois Counter (GCM) models
+
+Key exchange could be hard in secret-key encryption, thus new techniques are invented.
+
+### Public-key encryption
+
+- Also called asymmetric cryptography
+  - Allows Alice to send a secret message to Bog without any prearranged shared secret
+  - There is one key for encryption, and a different key for decryption
+- RSA, EIGamal, ECC, NTRU
+
+**How does it work?**
+
+- Bob gives everyone a copy of his public encryption key. 
+- Alice uses it to encrypt a message, and sends the encrypted message to Bob
+- Bob uses his private decryption key to decrypt the message
+
+**Hybrid cryptography**
+
+In addition to having longer keys, public-key cryptography takes a long time to calculate, thus hybrid cryptography is used for almost every application on the Internet today
+
+- Pick a random 128-bit key $K$ for a secret-key cyptosystem
+- Encrypt the large message with the key $K$ (e.g. using AES)
+- Encrypt the key $K$ using a public-key cryptosystem
+- Send the encrypted message and the encrypted key to Bob
+
+### Integrity
+
+Mallory can easily change the message in such a way that the checksum stays the same, thus we need Cryptographic hash functions
+
+- A hash function $h$ takes an arbitrary length string $x$ and computes a fixed length string $y=h(x)$ called a message digest
+- MD5, SHA-1, SHA-2, SHA-3
+- Three properties
+  - Preimage-resistance
+  - Second preimage-resistance
+  - Collision-resistance
+
+### Authentication
+
+- We have a large class of hash functions, and use a shared secret key to pick the correct one
+- These "keyed hash functions" are usually called **Message Authentication Codes**, or **MAC**s
+
+- SHA-1-HMAC, SHA-256-HMAC, CBC-MAC
+
+**Combining ciphers and MACs**
+
+- Encrypt-the-MAC is the recommended strategy
+- GCM, CCM or OCB mode
+
+**Repudiation**
+
+- Alice can just claim that Bob made up the message $M$, and calculated the tag $T$ himself
+- **Digital signatures**
+  - If Bob receives a message with Alice's digital signature on it, then
+    - Alice sent the message
+    - The message has not been altered since it was sent
+    - Bob can prove these facts to a third party (not achieved by MAC)
+  - To make a digital signature, Alice sign the message with her private **signature key** (private)
+  - To verify Alice's signature, Bob verifies the message with his copy of Alice's **public verification key**
+
+**The Key Management Problem**
+
+- How can Bob find Alice's verification key?
+  - Personally (manual keying): SSH does this
+  - Friend (web of trust): PGP does this
+  - Third party (CAs): TLS / SSL do this
+
+**Certificate authorities**
+
+- A CA is a trusted third party who keeps a directory of people's verification keys
+
+### Link layer security
+
+![1625013925553](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1625013925553.png)
+
+**Don'ts from WEP**
+
+- Randomness: have sufficient randomness
+- Integrity: Do not use checksums for integrity. Use keyed MACs instead.
+- Go through public reviews cryptographic protocols before standardizing them.
+
+### Network layer security
+
+Prevent other hosts and routers in the middle cannot intercept or modify the packet
+
+- IP Security suite (IPSec): extends IP to provide confidentiality, integrity
+
+- Different Virtual Private Networks (VPNs) architectures are commonly used
+
+- These VPNs use IPSec in one of the two modes
+
+**VPN**: A private network that connects physically distant hosts via virtual links
+
+**Internet Key Exchange(IKE)**: Both source and destination IP addresses agree on a shared symmetric key. Based on this key, we can encrypt and compute MACs over the IP packet or parts of it.
+
+**AH and ESP**: AH provides integrity over original IP header and IPSec payload. ESP provides confidentiality over IPSec payload. ESP trailer provides integrity over IPSec payload.
+
+- Protocol field in the first IP header is set to 50 for AH, 51 for ESP
+
+**IPSec transport mode**
+
+- used in host-to-host VPNs
+- Only one plaintext IP header is included in the packet, thus the confidentiality of IP header is not guaranteed
+
+**IPSec tunnel mode**
+
+![1625017404616](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1625017404616.png)
+
+- IPSec is a form of IP-in-IP tunneling
+
+- SSH is another example of tunneling
+- Used in *-to-Network VPNs
+
+### Transport layer security
+
+![1625017869698](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1625017869698.png)
+
+![1625018293864](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1625018293864.png)
+
+### Application layer security
+
+- Secure Shell protocol (SSH): provides confidentiality, integrity guarantees to insecure network application
+
+  - SSH protocol parts 
+
+  ![1625018978473](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1625018978473.png)
+
+  - SSH port forwarding
+
+- Securing email
+  - Mail transfer: Simple mail transfer protocol (SMTP)
+  - Secure email design
+
+### Privacy enhancing technologies - PETs
+
+- Anonymity: Privacy as masks, surveillance. Hiding identities. Tor onion routing.
+- Data minimization.: Related to privacy as filters. Minimizing the amount of data collected. Private Information Retrieval.
+
+**Tor**: makes internet browsing unlinkably anonymous
