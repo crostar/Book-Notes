@@ -842,3 +842,191 @@ Prevent other hosts and routers in the middle cannot intercept or modify the pac
 - Data minimization.: Related to privacy as filters. Minimizing the amount of data collected. Private Information Retrieval.
 
 **Tor**: makes internet browsing unlinkably anonymous
+
+
+
+## Module 6. Database security
+
+### Security requirements
+
+#### Authorization / access control
+
+- Types of access control discussed earlier (DAC, MAC, RBAC) also apply to DBs
+- Granularity: Access control on relations, records, attributes
+- Supporting different query types (operations): SELECT, INSERT, UPDATE, DELETE
+- Inference problem: Parts of a database are related, thus could access private information by not directly accessing it
+
+**DAC for databases**
+
+- Your users' privileges can be assigned to other users by the GRANT keyword and revoked from them by the REVOKE keyword
+- Type of privileges:
+  - Account-level privileges: DBMS functionalities (e.g. shutdown server), creating or modifying tables, routines, users and roles
+  - Relation-level privileges: SELECT, UPDATE, REFERENCES privileges in a relation
+
+![1626139724275](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1626139724275.png)
+
+![1626139756811](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1626139756811.png)
+
+- For an SQL query we can generate a view that represents the result
+
+  - Views can be used to only reveal certain columns (attributes after SELECT) and rows (WHERE clause) for access control
+
+  ![1626139959327](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1626139959327.png)
+
+- INSERT & UPDATE query
+
+  ![1626140020375](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1626140020375.png)
+
+- Disadvantages
+
+  - Rely on users to implement the principle of least privilege.
+  - System administrator needs to know how privileges are inter-related and assign multiple privileges for a user's task
+  - Need to manually change privileges for multiple users who want to perform the same task, or when a user changes positions in an organization. 
+
+**RBAC for databases**
+
+![1626140256632](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1626140256632.png)
+
+Note the role is independent of users
+
+**MAC for databases**
+
+- In the context of databases, multilevel security (MLS) databases provide MAC
+
+- We consider a Bell-La Padula confidentiality model
+
+  - Simple security property - No read ups
+  - *-property - No write downs
+
+  ![1626140528128](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1626140528128.png)
+
+  - Creating multiple record with different conf. levels when UPDATEing (polyinstantiation)
+  - Select appropriate poly-instantiated record for future read-downs
+
+#### Confidentiality
+
+- Data at rest: On host that runs the database server
+  - Hybrid cryptography for file or column-level encryption
+  - Full-disk encryption
+- Data in transit: TLS secures connection between the client and the server
+
+#### Authentication
+
+DBMS servers are authenticated via certificates presented in the TLS handshake as usual. Root CA can be an organizational entity or third-party. DBMS servers can authenticate remote clients via
+
+- Password-based authentication: client sends username & password over TLS 
+- Certificate-based authentication: Client presents a certificate during the third message in the TLS handshake (Client Finished message)
+- Authentication via external services (LDAP): Client sends username & password over TLS, server proxies them to a directory server that checks  them and returns an authentication status
+
+#### Integrity
+
+- Authorize a user to modify an elements, but prevent them from making changes that result in an invalid database state
+- Ensure correctness of database elements by **element checks**
+- Typically enforced by **triggers**: procedures that are automatically executed after INSERT, DELETE, UPDATE...
+- **Consistency**: A transaction should take the database from one consistent state to another
+- two phase udpate
+  - First phase: gather information required for changes, but don't perform any updates, repeat if problem arises
+  - Second phase: make changes permanent, repeat if problem arises
+  - System log includes instructoin from both phases
+    - using the system log, a  DBMS can recover from availability failures, by redoing transactions
+    - Unsuccessful transactions can be rolled back
+
+- Referenctial integrity
+  - Tables may have a primary key
+  - Might also have a single or multiple foreign keys, which are primary keys in some other table
+  - There are no dangling foreign keys
+
+#### Availability
+
+- Recovery from system log files
+- Redundancy: reduce risk that service is affected from some component failure; transparently transfer operation to anotehr functioning component.
+  - Uninterrupted power supplies
+  - Multiple hard-drives in RAID configurations
+- Database clusters: Redundancy by more machines. Load-balancing among clustered machines.
+- Failover: deal with catastrophes etc., when machines are down
+  - Clustered machines are in the same physical location
+  
+  - Setup secondary system: update it regularly, setup DBMS and configure it
+  
+- Perform periodic backups of the system log, database, configuration files to the secondary system, over a secure channel
+  
+  - Replay transactions from the log file, to ensure secondary system is in the last state that the primary was at
+  
+#### Auditability
+
+We want to be able to: 
+
+- retroactively identify who has run these queries without authorization
+- hold users accountable and deter such accesses
+
+Setting up auditin
+
+- Set an audit policy (or policies) to observe queries
+- DBMS generates an audit trail or log of events that meet the audit policy. This log can be processed later into DB tables
+  - Audit policies specify
+    - Status: Record when events succeed, fail or both
+    - Category: Specifies what events are to be observed. Logging at the right granularity is important.
+
+### Data inference
+
+- Privacy: We want to protect the privacy of the users whose data is in the database
+- Utility: We want to allow certain SQL queries, as data analysts want to learn interesting properties of the data
+- These two criteria often go against each other.
+
+![1626923918570](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1626923918570.png)
+
+![1626924035555](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1626924035555.png)
+
+### Data release
+
+- Data aggregation: collect different datasets
+
+**Data Mining**
+
+- Tries to automatically find interesting patterns in data using a plethora of techs
+- Still need human to judge whether pattern makes sense
+
+Persistent identifiers (Quasi-identifiers) could be used to deanonymize data
+
+Background knowledge relating to the primary data can be used to further deanonymize records
+
+**Prevent anonymity fails**
+
+- Quasi-identifiers
+  - Reduce granularity to deter linking: year instead of DOB, only first couple digits of zip code. Increase anonymous set.
+  - Remove attributes to prevent linking altogether. We reduce utility of the dataset.
+- Publish aggregate statistics
+- Change values slightly (add randomness)
+
+#### k-anonymity
+
+1. Pre-processing quasi-identifiers to deter data linking
+2. ensure that for each published record, we publish at least  $k-1$ other records with the same quasi-identifier ($k \geq 2$)
+3. This constraint ensures that any person who satisfies a given quasi-identifier could correspond to any one of the $k$ records with the same quasi-identifier.
+
+Vulnerable to homogeneity attack: For a given quasi-identifier value, all other data values are identical
+
+Background knowledge attack: For a given quasi-identifier value, other data values are distinct, but you know some background information to rule out many of them.
+
+#### $l$-diversity
+
+For any quasi-identifier value, there should be at least $l$ different values of the sensitive fields. 
+
+#### Perturbing sensitive values
+
+- Perturbations: Change sensitive values slightly by adding randomness
+- Linear transform: $y=mx+b$. Easy to reverse to get original $x$
+- Adding randomness: $y=x+\phi$, where $\phi$ is picked at random from range $(-\infty, \infty)$, using some probability distribution. Higher noise ($||\phi||) \rightarrow$ lower utility, higher privacy.
+
+- $\phi$ is sampled from a Laplace PDF
+
+![1626926009343](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1626926009343.png)
+
+ **Sensitivity**
+
+![1626933652242](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1626933652242.png)
+
+**Differential privacy guarantee:**
+
+![1626933872637](C:\Users\59129\AppData\Roaming\Typora\typora-user-images\1626933872637.png)
+
