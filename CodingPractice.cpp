@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <vector>
+#include <list>
 using namespace std;
 
 class MinHeap {
@@ -119,19 +120,95 @@ class MinHeap {
     }
 };
 
+class HashTable {
+    public:
+
+    vector<list<int>> _store;
+    int _size;
+
+    HashTable(int n) : _store(n, list<int>()), _size(0) {}
+
+    void insert(int i) {
+        int key = hash(i);
+        for (int l : _store[key]) {
+            if (l == i) return;
+        }
+        _store[key].push_back(i);
+        _size += 1;
+    }
+
+    void erase(int i) {
+        cout << "Erasing " << i << endl;
+        int key = hash(i);
+        int oriSize = _store[key].size();
+        _store[key].remove(i);
+        if (oriSize != (int)_store[key].size()) {
+            _size -= 1;
+        }
+        return;
+    }
+
+    int count(int i) {
+        int key = hash(i);
+        for (int l : _store[key]) {
+            if (l == i) return 1;
+        }
+        return 0;
+    }
+
+    int size() {
+        return _size;
+    }
+
+    bool empty() {
+        return _size == 0;
+    }
+
+    void print() {
+        for (int i=0; i<(int)_store.size(); i++) {
+            cout << "Bucket " << i << ": ";
+            for (int j : _store[i]) {
+                cout << j << ", ";
+            }
+            cout << endl;
+        }
+    }
+
+    private:
+
+    int hash(int n) {
+        return n % _store.size();
+    }
+};
+
 int main() {
     /* Heap Testing */
-    MinHeap h;
-    vector<int> v{5, 6, 2, 3, 1, 4};
-    // for (auto i : v) {
-    //     h.push(i);
+    // MinHeap h;
+    // vector<int> v{5, 6, 2, 3, 1, 4};
+    // // for (auto i : v) {
+    // //     h.push(i);
+    // // }
+    // h.heapify(v);
+    // while (!h.empty()) {
+    //     cout << h.top() << ", ";
+    //     h.pop();
     // }
-    h.heapify(v);
-    while (!h.empty()) {
-        cout << h.top() << ", ";
-        h.pop();
+    // cout << endl;
+
+    /* Hashmap Testing */
+    HashTable h(10);
+    vector<int> v{1, 2, 3, 3, 11, 12, 13, 14};
+    for (auto i : v) {
+        h.insert(i);
     }
-    cout << endl;
+    h.print();
+    cout << h.count(3) << endl;
+    cout << h.size() << endl;
+    h.erase(3);
+    h.erase(11);
+    h.erase(5);
+    h.print();
+    cout << h.size() << endl;
 
     return 0;
 }
